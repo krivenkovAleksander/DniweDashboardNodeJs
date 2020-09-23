@@ -1,60 +1,80 @@
 
 import express from 'express';
 import MongoClient from 'mongodb';
+import cors from 'cors';
 import bodyParser from 'body-parser';
 import mongoose from 'mongoose';
-import PostModel from './models/Post.js';
-// import Post from './models/Post.js';
-// const bodyParser  = require('body-parser');
-// const mongoose = require('mongoose');
+import PostController  from './app/controllers/PostController.js';
+import UsersController from './app/controllers/UsersController.js';
+import jwt from 'express-jwt';
+
+const Users = new UsersController();
+const Post = new PostController();
+
 const port = 8000;
 
-mongoose.connect('mongodb://localhost:27017/blog', {useNewUrlParser: true, useUnifiedTopology: true});
+mongoose.connect('mongodb://localhost:27017/DniweBoardBase', {useNewUrlParser: true, useUnifiedTopology: true});
 
 const app = express();
 app.use(bodyParser.urlencoded({extended:true}));
 app.use(bodyParser.json());
+app.use(cors());
+
+// app.use((req, res, next) => {
+  // res.setHeader('Access-Control-Allow-Origin', 'http://localhost:8000');
+  // res.setHeader('Access-Control-Allow-Headers', 'Content-type,Authorization');
+  // next();
+// });
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+const jwtMW = jwt({ secret:'SuperSecretKey', algorithms: ['HS256'] });
+// MOCKING DB just for test
+
+// LOGIN ROUTE
+app.post('/login', Users.LoginUser);
+
+app.get('/', jwtMW /* Using the express jwt MW here */, (req, res) => {
+  res.send('You are authenticated'); //Sending some response when authenticated
+});
+// app.get('/', jwtMW /* Using the express jwt MW here */, (req, res) => {
+//   res.send('You are authenticated'); //Sending some response when authenticated
+// });
+
+// Error handling
+app.use(function(err, req, res, next) {
+  console.log('error');
+  if (err.name === 'UnauthorizedError') {
+    // Send the error rather than to show it on the console
+    res.status(401).send(err);
+  } else {
+    next(err);
+  }
+});
 
 
 
-app.post('/posts', (req, res) => {
-    const data = req.body;
-    const post = new PostModel({
-        title:data.title,
-        text:data.text
-    });
-    post.save().then(()=>{
-        res.send({status: 'ok'})
-    })
-})
-app.get('/posts', (req, res) => {
-    PostModel.find().then((err, post) => {
-        if(err) {
-            res.send(err);
-        }
-        res.json(post);
-    })
-})
-app.delete('/posts/:id', (req,res) => {
-    PostModel.remove({
-        _id: req.params.id
-    }).then(post => {
-        if(post)
-        {
-            res.json({status: 'deleted'});
-        } else {
-            res.json({status: 'delete_error'})
-        }
-    })
-})
-app.put('/posts/:id', (req,res) => {
-    PostModel.findByIdAndUpdate(req.params.id, {$set: req.body}, (err) => {
-        if(err) {
-            res.send(err);
-        }
-        res.json({status: "updated"});
-    })
-})
+
+
+
+
+
+
+app.get('/UsersController', Users.GetUsers);
+app.post('/UserRegister', Users.RegisterUser);
+
+app.get('/protected',
+  jwtMW,
+  function(req, res) {
+    // if (!req.user.admin) return res.sendStatus(401);
+    res.sendStatus(200);
+  });
+// app.post('/posts', Post.create)
+// app.get('/posts', Post.index);
+// app.delete('/posts/:id', Post.delete);
+// app.put('/posts/:id', Post.update);
+// app.put('/posts/:id', Post.read);
 app.listen(port, () => {
   console.log('We are live on ' + port);
 });
