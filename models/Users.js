@@ -3,6 +3,8 @@ import mongoose from 'mongoose';
 const UserInfo = new mongoose.Schema({
     login:String,
     password: String,
+    session: String,
+    userId: String,
     firstName: String,
     secondName: String,
     ThirdName: String,

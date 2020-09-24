@@ -1,6 +1,7 @@
 
 import UserModel from '../../models/Users.js';
-import jwtToken from 'jsonwebtoken';
+// import jwtToken from 'jsonwebtoken';
+import crypto from 'crypto'
 import bcrypt from 'bcrypt';
 
 let users = [
@@ -40,9 +41,10 @@ export default class UsersController {
                 score: 0,
                 Permissions: "user",
                 Avatar: '',
+                sesion: '',
+                userId: '',
             });
             UserModel.findOne({login: data.login}).then(data => {
-                console.log(data);
                 if(data)
                 {
                     res.status(400).send({
@@ -65,72 +67,48 @@ export default class UsersController {
         
     };
     LoginUser(req, res) {
-        // console.log(req, res, jwtToken);
-        console.log('req', req.body);
-        const {username, password} = req.body;
-        console.log(req.body);
-        UserModel.findOne({login: username}).then((userInfo) => {
-            // console.log(data);
-            // console.log(username);
-            // console.log(password);
+        const {login, password} = req.body;
+        UserModel.findOne({login: login}).then((userInfo) => {
+            if( userInfo === null){
+                res.status(400).send({
+                    status: 'error',
+                    message: 'Не верный логин или пароль'
+                })
+                return;
+            }
             bcrypt.compare(password, userInfo.password)
             .then(samePassword => {
-                console.log('SamePassword', samePassword);
                 if(samePassword){
-                    res.status(400).send({
-                        status: 'error',
-                        message: 'Вы успешно авторизировались'
+                    let newUserSession =  crypto.randomBytes(64).toString('hex');
+                    let newUserId = crypto.randomBytes(8).toString('hex');
+                    
+                    UserModel.findByIdAndUpdate(userInfo._id, {$set:{
+                        session: newUserSession,
+                        userId: newUserId,
+                    }}, (err) => {
+                        console.log('ERROR');
+                        res.status(400).send({
+                            status: 'error',
+                            message: 'Ошибка создания сессии пользователя, обратитесь куда нибудь'
+                        })
+                        return;
                     })
+                   res.send({
+                    status: 'ok',
+                    message: 'Вы успешно авторизировались',
+                    userSession: newUserSession,
+                    userId: newUserId,
+                   });
+                   return;
+                   
                 } else {
                     res.status(400).send({
                         status: 'error',
                         message: 'Не верный логин или пароль'
                     })
+                    return;
                 }
             });
-            res.status(400).send({
-                        status: 'error',
-                        message: 'Пользователь с таким логином уже существует'
-                    })
-            // if(data)
-            // {
-       
-            // } else {
-                
-            //     UsersAdd.save()
-            //     .then(()=>{
-            //                 res.send({
-            //                     status: 'ok',
-            //                     message:'Вы успешно зарегестрировались'
-            //                 })
-            //             });
-            // }
         })
-        // Use your DB ORM logic here to find user and compare password
-        // for (let user of users) {
-        // //   console.log(username, user.username);
-        // //   console.log(password, user.password);
-        //   // I am using a simple array users which i made above
-        //   if (
-        //     username == user.username &&
-        //     password ==
-        //       user.password /* Use your password hash checking logic here !*/
-        //   ) {
-        //     //If all credentials are correct do this
-        //     let token = jwtToken.sign(
-        //       { id: user.id, username: user.username },
-        //       'SuperSecretKey',
-        //       { expiresIn: 129600 }
-        //     ); // Sigining the token
-        //     res.json({
-        //       sucess: true,
-        //       err: null,
-        //       token,
-        //     });
-        //     break;
-        //   } else {
-      
-        //   }
-        // }
       }
 };

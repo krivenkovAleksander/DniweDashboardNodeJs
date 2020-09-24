@@ -6,7 +6,6 @@ import bodyParser from 'body-parser';
 import mongoose from 'mongoose';
 import PostController  from './app/controllers/PostController.js';
 import UsersController from './app/controllers/UsersController.js';
-import jwt from 'express-jwt';
 
 const Users = new UsersController();
 const Post = new PostController();
@@ -14,7 +13,7 @@ const Post = new PostController();
 const port = 8000;
 
 mongoose.connect('mongodb://localhost:27017/DniweBoardBase', {useNewUrlParser: true, useUnifiedTopology: true});
-
+mongoose.set('useFindAndModify', false);
 const app = express();
 app.use(bodyParser.urlencoded({extended:true}));
 app.use(bodyParser.json());
@@ -29,47 +28,15 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-const jwtMW = jwt({ secret:'SuperSecretKey', algorithms: ['HS256'] });
 // MOCKING DB just for test
 
 // LOGIN ROUTE
 app.post('/login', Users.LoginUser);
 
-app.get('/', jwtMW /* Using the express jwt MW here */, (req, res) => {
-  res.send('You are authenticated'); //Sending some response when authenticated
-});
-// app.get('/', jwtMW /* Using the express jwt MW here */, (req, res) => {
-//   res.send('You are authenticated'); //Sending some response when authenticated
-// });
-
 // Error handling
-app.use(function(err, req, res, next) {
-  console.log('error');
-  if (err.name === 'UnauthorizedError') {
-    // Send the error rather than to show it on the console
-    res.status(401).send(err);
-  } else {
-    next(err);
-  }
-});
-
-
-
-
-
-
-
-
 
 app.get('/UsersController', Users.GetUsers);
 app.post('/UserRegister', Users.RegisterUser);
-
-app.get('/protected',
-  jwtMW,
-  function(req, res) {
-    // if (!req.user.admin) return res.sendStatus(401);
-    res.sendStatus(200);
-  });
 // app.post('/posts', Post.create)
 // app.get('/posts', Post.index);
 // app.delete('/posts/:id', Post.delete);
