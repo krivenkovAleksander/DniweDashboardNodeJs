@@ -37,6 +37,9 @@ app.post('/login', Users.LoginUser);
 
 app.get('/UsersController', Users.GetUsers);
 app.post('/UserRegister', Users.RegisterUser);
+app.post('/VerifyUser', Users.VerifyUser);
+
+
 // app.post('/posts', Post.create)
 // app.get('/posts', Post.index);
 // app.delete('/posts/:id', Post.delete);

@@ -4,18 +4,7 @@ import UserModel from '../../models/Users.js';
 import crypto from 'crypto'
 import bcrypt from 'bcrypt';
 
-let users = [
-    {
-      id: 1,
-      username: 'test',
-      password: 'asdf123',
-    },
-    {
-      id: 2,
-      username: 'test2',
-      password: 'asdf12345',
-    },
-  ];
+
 const BCRYPT_SALT_ROUNDS = 12;
 export default class UsersController {
 
@@ -64,7 +53,6 @@ export default class UsersController {
             })
 
         })
-        
     };
     LoginUser(req, res) {
         const {login, password} = req.body;
@@ -86,29 +74,64 @@ export default class UsersController {
                         session: newUserSession,
                         userId: newUserId,
                     }}, (err) => {
-                        console.log('ERROR');
-                        res.status(400).send({
-                            status: 'error',
-                            message: 'Ошибка создания сессии пользователя, обратитесь куда нибудь'
-                        })
-                        return;
-                    })
-                   res.send({
-                    status: 'ok',
-                    message: 'Вы успешно авторизировались',
-                    userSession: newUserSession,
-                    userId: newUserId,
-                   });
-                   return;
-                   
+                        console.log('ERROR', err);
+                        if(!err)
+                        {
+                            res.send({
+                                    status: 'ok',
+                                    message: 'Вы успешно авторизировались',
+                                    userSession: newUserSession,
+                                    userId: newUserId,
+                            });
+                            return;
+                        } else 
+                        {
+                            res.status(400).send({
+                                status: 'error',
+                                message: 'Ошибка создания сессии пользователя, обратитесь куда нибудь'
+                            })
+                            return;
+                        }
+                        
+                    }).then(info => {
+                        console.log("Success", info);
+                    });
                 } else {
                     res.status(400).send({
                         status: 'error',
                         message: 'Не верный логин или пароль'
-                    })
+                    });
                     return;
                 }
             });
         })
-      }
+    };
+    VerifyUser(req, res) {
+        const {session, id} = req.body;
+        console.log(req.body);
+        UserModel.findOne({session: session, userId: id}).then((userInfo) => {
+            
+            console.log("ErrorSend", userInfo);
+            if( userInfo === null){
+                res.status(400).send({
+                    status: 'errorSessionVerification',
+                })
+                return;
+            } else {
+                res.status(200).send({
+                    status: 'ok',
+                    payload: {
+                        firstName: userInfo.firstName,
+                        secondName: userInfo.secondName,
+                        thirdName: userInfo.ThirdName,
+                        Avatar: userInfo.Avatar,
+                        Permissions: userInfo.Permissions,
+                        score: userInfo.score,
+
+                    },
+                });
+                return;
+            }
+        })
+    };
 };
