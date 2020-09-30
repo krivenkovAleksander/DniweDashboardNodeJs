@@ -36,17 +36,14 @@ export default class UsersController {
             UserModel.findOne({login: data.login}).then(data => {
                 if(data)
                 {
-                    res.status(400).send({
-                        status: 'error',
-                        message: 'Пользователь с таким логином уже существует'
-                    })
+                    res.status(400).send('UserExist')
                 } else {
                     
                     UsersAdd.save()
                     .then(()=>{
                                 res.send({
                                     status: 'ok',
-                                    message:'Вы успешно зарегестрировались'
+                                    message:'Вы успешно зарегистрировались'
                                 })
                             });
                 }
@@ -58,10 +55,7 @@ export default class UsersController {
         const {login, password} = req.body;
         UserModel.findOne({login: login}).then((userInfo) => {
             if( userInfo === null){
-                res.status(400).send({
-                    status: 'error',
-                    message: 'Не верный логин или пароль'
-                })
+                res.status(400).send('WrongLoginOrPassword');
                 return;
             }
             bcrypt.compare(password, userInfo.password)
@@ -86,10 +80,7 @@ export default class UsersController {
                             return;
                         } else 
                         {
-                            res.status(400).send({
-                                status: 'error',
-                                message: 'Ошибка создания сессии пользователя, обратитесь куда нибудь'
-                            })
+                            res.status(400).send('SessionCreateError');
                             return;
                         }
                         
@@ -97,10 +88,7 @@ export default class UsersController {
                         console.log("Success", info);
                     });
                 } else {
-                    res.status(400).send({
-                        status: 'error',
-                        message: 'Не верный логин или пароль'
-                    });
+                    res.status(400).send('WrongLoginOrPassword');
                     return;
                 }
             });
@@ -113,9 +101,7 @@ export default class UsersController {
             
             console.log("ErrorSend", userInfo);
             if( userInfo === null){
-                res.status(400).send({
-                    status: 'errorSessionVerification',
-                })
+                res.status(400).send('errorSessionVerification')
                 return;
             } else {
                 res.status(200).send({
